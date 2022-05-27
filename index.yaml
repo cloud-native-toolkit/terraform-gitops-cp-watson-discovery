@@ -1,0 +1,11 @@
+name: gitops-terraform-gitops-cp-watson-discovery
+type: gitops
+description: >-
+  Module to populate a gitops repo with the resources to provision
+  terraform-gitops-cp-watson-discovery
+tags:
+  - tools
+  - gitops
+versions: []
+id: >-
+  github.com/cloud-native-toolkit/terraform-gitops-terraform-gitops-cp-watson-discovery
