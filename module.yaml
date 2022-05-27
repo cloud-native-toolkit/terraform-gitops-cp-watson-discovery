@@ -1,8 +1,8 @@
-name: gitops-terraform-gitops-cp-watson-discovery
+name: gitops-cp-watson-discovery
 type: gitops
 description: >-
   Module to populate a gitops repo with the resources to provision
-  terraform-gitops-cp-watson-discovery
+  CP4D Watson Discovery
 tags:
   - tools
   - gitops
