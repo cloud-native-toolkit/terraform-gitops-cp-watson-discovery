@@ -3,7 +3,7 @@ locals {
   bin_dir       = module.setup_clis.bin_dir
   operandrequest_name  = "ibm-cpd-wd-operandrequest"
   operandrequest_yaml_dir = "${path.cwd}/.tmp/${local.name}/chart/${local.operandrequest_name}"
-  subscription_name  = "ibm-cpd-wd-subcription"
+  subscription_name  = "ibm-cpd-wd-subscription"
   subscription_yaml_dir = "${path.cwd}/.tmp/${local.name}/chart/${local.subscription_name}"
   instance_yaml_dir = "${path.cwd}/.tmp/${local.name}/chart/${local.name}"
   ingress_host  = "${local.name}-${var.namespace}.${var.cluster_ingress_hostname}"
@@ -94,7 +94,7 @@ resource null_resource setup_gitops_operandrequest {
   }
 }
 
-resource null_resource create_subcription_yaml {
+resource null_resource create_subscription_yaml {
   depends_on = [null_resource.setup_gitops_operandrequest]
   provisioner "local-exec" {
     command = "${path.module}/scripts/create-yaml.sh '${local.subscription_name}' '${local.subscription_yaml_dir}'"
@@ -106,7 +106,7 @@ resource null_resource create_subcription_yaml {
 }
 
 resource null_resource setup_gitops_subscription {
-  depends_on = [null_resource.create_subcription_yaml]
+  depends_on = [null_resource.create_subscription_yaml]
 
   triggers = {
     name = local.subscription_name
