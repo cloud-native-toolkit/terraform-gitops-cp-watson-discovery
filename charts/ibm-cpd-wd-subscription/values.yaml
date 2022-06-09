@@ -1,0 +1,14 @@
+# Default values for Watston Discovery Operator Subscription.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+  name: ibm-watson-discovery-operator-subscription
+  operator_namespace: cpd-operators
+  managed_by: ibm-watson-discovery-operator
+  syncWave: "-5"
+  spec:
+    channel: v4.0
+    name: ibm-watson-discovery-operator
+    source: ibm-operator-catalog
+    sourceNamespace: openshift-marketplace
+    installPlanApproval: Automatic

@@ -1,4 +1,5 @@
-module "gitops_module" {
+module "cp-watson-discovery" {
+ 
   source = "./module"
 
   gitops_config = module.gitops.gitops_config
@@ -6,4 +7,6 @@ module "gitops_module" {
   server_name = module.gitops.server_name
   namespace = module.gitops_namespace.name
   kubeseal_cert = module.gitops.sealed_secrets_cert
+  operator_namespace= "cpd-operators"
+  cpd_namespace = "gitops-cp4d-instance"
 }

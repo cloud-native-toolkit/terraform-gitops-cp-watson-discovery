@@ -1,0 +1,9 @@
+# Default values for Watston Discovery Instance cr.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+name: wd
+cpd_namespace: gitops-cp4d-instance
+version: "4.0.9"
+storage_class: portworx-db-gp2-sc
+syncWave: "-3"
