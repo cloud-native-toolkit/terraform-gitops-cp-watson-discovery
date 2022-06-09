@@ -1,0 +1,16 @@
+apiVersion: discovery.watson.ibm.com/v1
+kind: WatsonDiscovery
+metadata:
+  annotations:
+    oppy.ibm.com/disable-rollback: "true"
+    argocd.argoproj.io/sync-wave: {{ .Values.syncwave | default "-3" | quote }}
+  name: {{ .Values.name }}
+  namespace: {{ .Values.cpd_namespace }} 
+spec:
+  license:
+    accept: true
+  version: {{ .Values.version }}
+  shared:
+    storageClassName: {{ .Values.storage_class }}
+  watsonGateway:
+    version: main

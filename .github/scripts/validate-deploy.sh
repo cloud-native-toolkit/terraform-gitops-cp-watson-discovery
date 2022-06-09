@@ -1,34 +1,15 @@
 #!/usr/bin/env bash
 
-SCRIPT_DIR=$(cd $(dirname "$0"); pwd -P)
-
 GIT_REPO=$(cat git_repo)
 GIT_TOKEN=$(cat git_token)
-
-BIN_DIR=$(cat .bin_dir)
-
-export PATH="${BIN_DIR}:${PATH}"
-
-source "${SCRIPT_DIR}/validation-functions.sh"
-
-if ! command -v oc 1> /dev/null 2> /dev/null; then
-  echo "oc cli not found" >&2
-  exit 1
-fi
-
-if ! command -v kubectl 1> /dev/null 2> /dev/null; then
-  echo "kubectl cli not found" >&2
-  exit 1
-fi
-
-if ! command -v ibmcloud 1> /dev/null 2> /dev/null; then
-  echo "ibmcloud cli not found" >&2
-  exit 1
-fi
 
 export KUBECONFIG=$(cat .kubeconfig)
 NAMESPACE=$(cat .namespace)
 COMPONENT_NAME=$(jq -r '.name // "my-module"' gitops-output.json)
+SUBSCRIPTION_NAME=$(jq -r '.sub_name // "sub_name"' gitops-output.json)
+INSTANCE_NAME=$(jq -r '.inst_name // "instance_name"' gitops-output.json)
+OPERATOR_NAMESPACE=$(jq -r '.operator_namespace // "operator_namespace"' gitops-output.json)
+CPD_NAMESPACE=$(jq -r '.cpd_namespace // "cpd_namespace"' gitops-output.json)
 BRANCH=$(jq -r '.branch // "main"' gitops-output.json)
 SERVER_NAME=$(jq -r '.server_name // "default"' gitops-output.json)
 LAYER=$(jq -r '.layer_dir // "2-services"' gitops-output.json)
@@ -42,13 +23,80 @@ cd .testrepo || exit 1
 
 find . -name "*"
 
-set -e
+if [[ ! -f "argocd/${LAYER}/cluster/${SERVER_NAME}/${TYPE}/${NAMESPACE}-${COMPONENT_NAME}.yaml" ]]; then
+  echo "ArgoCD config missing - argocd/${LAYER}/cluster/${SERVER_NAME}/${TYPE}/${NAMESPACE}-${COMPONENT_NAME}.yaml"
+  exit 1
+fi
 
-validate_gitops_content "${NAMESPACE}" "${LAYER}" "${SERVER_NAME}" "${TYPE}" "${COMPONENT_NAME}" "values.yaml"
+echo "Printing argocd/${LAYER}/cluster/${SERVER_NAME}/${TYPE}/${NAMESPACE}-${COMPONENT_NAME}.yaml"
+cat "argocd/${LAYER}/cluster/${SERVER_NAME}/${TYPE}/${NAMESPACE}-${COMPONENT_NAME}.yaml"
 
-check_k8s_namespace "${NAMESPACE}"
+if [[ ! -f "payload/${LAYER}/namespace/${NAMESPACE}/${COMPONENT_NAME}/values.yaml" ]]; then
+  echo "Application values not found - payload/${LAYER}/namespace/${NAMESPACE}/${COMPONENT_NAME}/values.yaml"
+  exit 1
+fi
 
-#check_k8s_resource "${NAMESPACE}" "deployment" "${COMPONENT_NAME}"
+echo "Printing payload/${LAYER}/namespace/${NAMESPACE}/${COMPONENT_NAME}/values.yaml"
+cat "payload/${LAYER}/namespace/${NAMESPACE}/${COMPONENT_NAME}/values.yaml"
+
+count=0
+until kubectl get namespace "${NAMESPACE}" 1> /dev/null 2> /dev/null || [[ $count -eq 20 ]]; do
+  echo "Waiting for namespace: ${NAMESPACE}"
+  count=$((count + 1))
+  sleep 15
+done
+
+if [[ $count -eq 20 ]]; then
+  echo "Timed out waiting for namespace: ${NAMESPACE}"
+  exit 1
+else
+  echo "Found namespace: ${NAMESPACE}. Sleeping for 30 seconds to wait for everything to settle down"
+  sleep 30
+fi
+
+echo "CP4D Operators namespace : "${OPERATOR_NAMESPACE}""
+echo "CP4D namespace : "${CPD_NAMESPACE}""
+
+CSV=""
+count=0
+csvstr="ibm-watson-discovery-operator."
+while [ true ]; do
+  sleep 60
+  CSV=$(kubectl get sub -n "${OPERATOR_NAMESPACE}" "${SUBSCRIPTION_NAME}" -o jsonpath='{.status.installedCSV} {"\n"}')
+  echo "Found CSV : "${CSV}""
+  count=$((count + 1))
+  if [[ $CSV == *"$csvstr"* ]];
+  then
+      echo "Found CSV : "${CSV}""
+      break
+  fi
+  if [[ $count -eq 120 ]]; then
+    echo "Timed out waiting for CSV"
+    exit 1
+  fi
+done
+
+SUB_STATUS=0
+while [[ $SUB_STATUS -ne 1 ]]; do
+  sleep 10
+  SUB_STATUS=$(kubectl get deployments -n "${OPERATOR_NAMESPACE}" -l olm.owner="${CSV}" -o jsonpath="{.items[0].status.availableReplicas} {'\n'}")
+  echo "Waiting for subscription "${SUBSCRIPTION_NAME}" to be ready in "${OPERATOR_NAMESPACE}""
+done
+
+echo "Watson Discvoery Operator is READY"
+sleep 60
+INSTANCE_STATUS=""
+
+while [ true ]; do
+  INSTANCE_STATUS=$(kubectl get WatsonDiscovery wd -n "${CPD_NAMESPACE}" -o jsonpath='{.status.watsonDiscoveryStatus} {"\n"}')
+  echo "Waiting for instance "${INSTANCE_NAME}" to be ready. Current status : "${INSTANCE_STATUS}""
+  if [ $INSTANCE_STATUS == "Completed" ]; then
+    break
+  fi
+  sleep 60
+done
+
+echo "Watson Discovery WatsonDiscovery/"${INSTANCE_NAME}" is "${INSTANCE_STATUS}""
 
 cd ..
 rm -rf .testrepo

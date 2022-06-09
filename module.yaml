@@ -2,7 +2,7 @@ name: gitops-cp-watson-discovery
 type: gitops
 description: >-
   Module to populate a gitops repo with the resources to provision
-  CP4D Watson Discovery
+  cp-watson-discovery
 tags:
   - tools
   - gitops
