@@ -1,2 +1,2 @@
 common_services_namespace: ibm-common-services
-cpd_namespace: gitops-cp4d-instance
+cpd_namespace: cp4d

@@ -94,5 +94,5 @@ variable "cpd_operator_namespace" {
 variable "cpd_namespace" {
   type        = string
   description = "CPD namespace"
-  default = "gitops-cp4d-instance"
+  default = "cp4d"
 }

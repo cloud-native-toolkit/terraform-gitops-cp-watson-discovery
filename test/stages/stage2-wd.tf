@@ -8,5 +8,5 @@ module "cp-watson-discovery" {
   namespace = module.gitops_namespace.name
   kubeseal_cert = module.gitops.sealed_secrets_cert
   operator_namespace= "cpd-operators"
-  cpd_namespace = "gitops-cp4d-instance"
+  cpd_namespace = "cp4d"
 }

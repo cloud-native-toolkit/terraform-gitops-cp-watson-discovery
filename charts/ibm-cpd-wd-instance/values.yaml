@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 name: wd
-cpd_namespace: gitops-cp4d-instance
+cpd_namespace: cp4d
 version: "4.0.9"
 storage_class: portworx-db-gp2-sc
 syncWave: "-3"
